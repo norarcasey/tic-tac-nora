@@ -1,8 +1,11 @@
 name: Publish to npm
 
 # Publishes @norarcasey/tic-tac-nora when a GitHub Release is published.
-# Requires an NPM_TOKEN repository secret (an npm automation token with
-# publish rights to the @norarcasey scope).
+#
+# Uses npm Trusted Publishing (OIDC) — no NPM_TOKEN secret required. Configure
+# this repo + workflow as a trusted publisher in the package settings on
+# npmjs.com (Settings → Trusted Publishing) before the first CI publish.
+# Provenance is attached automatically.
 on:
   release:
     types: [published]
@@ -12,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write # enables npm provenance
+      id-token: write # required for OIDC trusted publishing + provenance
     steps:
       - uses: actions/checkout@v4
 
@@ -22,6 +25,10 @@ jobs:
           node-version: 22.x
           registry-url: https://registry.npmjs.org
           cache: npm
+
+      # Trusted publishing requires npm >= 11.5.1, newer than what Node bundles.
+      - name: Update npm
+        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: npm ci
@@ -35,7 +42,6 @@ jobs:
             exit 1
           fi
 
+      # No NODE_AUTH_TOKEN — auth happens via OIDC. Provenance is automatic.
       - name: Publish
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish
