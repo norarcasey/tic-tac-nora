@@ -6,10 +6,11 @@ import {
   findWinningLine,
   getAvailableMoves,
   isBoardFull,
+  pickBestMove,
   pickRandomMove,
   WINNING_LINES,
 } from './logic'
-import type { Board } from './types'
+import type { Board, Player } from './types'
 
 /** Build a board from a 9-char string: 'X', 'O', or '.' for empty. */
 function board(spec: string): Board {
@@ -171,5 +172,47 @@ describe('pickRandomMove', () => {
       placed++
     }
     expect(placed).toBe(9)
+  })
+})
+
+describe('pickBestMove', () => {
+  it('returns null on a full board', () => {
+    expect(pickBestMove(board('XOXOXOXOX'), 'O')).toBeNull()
+  })
+
+  it('takes an immediate winning move', () => {
+    // O has 0,1 and can complete the top row at 2.
+    expect(pickBestMove(board('OO.XX....'), 'O')).toBe(2)
+  })
+
+  it('blocks the opponent’s immediate winning move', () => {
+    // X threatens the top row at 2; O has no win, so it must block.
+    expect(pickBestMove(board('XX.O.....'), 'O')).toBe(2)
+  })
+
+  it('prefers taking its own win over blocking the opponent', () => {
+    // X threatens 2, but O can complete its own row at 5 — winning beats blocking.
+    expect(pickBestMove(board('XX.OO....'), 'O')).toBe(5)
+  })
+
+  it('takes the center in response to a corner opening', () => {
+    expect(pickBestMove(board('X........'), 'O')).toBe(4)
+  })
+
+  it('always picks a legal empty square', () => {
+    const b = board('XX.OO.X..')
+    expect(getAvailableMoves(b)).toContain(pickBestMove(b, 'O'))
+  })
+
+  it('never loses: optimal vs optimal always draws', () => {
+    let b = createEmptyBoard()
+    let player: Player = 'X'
+    while (evaluateBoard(b).status === 'playing') {
+      const move = pickBestMove(b, player, () => 0)
+      expect(move).not.toBeNull()
+      b = applyMove(b, move as number, player)
+      player = player === 'X' ? 'O' : 'X'
+    }
+    expect(evaluateBoard(b).status).toBe('draw')
   })
 })

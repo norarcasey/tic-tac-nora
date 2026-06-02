@@ -44,10 +44,24 @@ describe('<TicTacNora />', () => {
     expect(square(0)).toHaveTextContent('O')
   })
 
-  it('announces a human win and highlights the winning line', async () => {
+  it('smart Nora blocks the human’s winning move', async () => {
     const user = userEvent.setup()
     render(<TicTacNora thinkingDelayMs={0} rng={firstAvailable} />)
 
+    // X takes corner 0; smart Nora replies in the center.
+    await user.click(square(0))
+    await waitFor(() => expect(square(4)).toHaveTextContent('O'))
+
+    // X takes 1, threatening to complete the top row at 2 — Nora must block it.
+    await user.click(square(1))
+    await waitFor(() => expect(square(2)).toHaveTextContent('O'))
+  })
+
+  it('announces a human win and highlights the winning line', async () => {
+    const user = userEvent.setup()
+    render(<TicTacNora difficulty="random" thinkingDelayMs={0} rng={firstAvailable} />)
+
+    // Against the random AI (rng=0 → first open square), the human can win.
     // Human takes 0, Nora 1; human takes 3, Nora 2; human takes 6 → column 0,3,6.
     await user.click(square(0))
     await waitFor(() => expect(square(1)).toHaveTextContent('O'))
@@ -67,7 +81,7 @@ describe('<TicTacNora />', () => {
 
   it('disables the board once the game is over', async () => {
     const user = userEvent.setup()
-    render(<TicTacNora thinkingDelayMs={0} rng={firstAvailable} />)
+    render(<TicTacNora difficulty="random" thinkingDelayMs={0} rng={firstAvailable} />)
 
     await user.click(square(0))
     await waitFor(() => expect(square(1)).toHaveTextContent('O'))
@@ -84,7 +98,7 @@ describe('<TicTacNora />', () => {
 
   it('starts a fresh game when Play again is clicked', async () => {
     const user = userEvent.setup()
-    render(<TicTacNora thinkingDelayMs={0} rng={firstAvailable} />)
+    render(<TicTacNora difficulty="random" thinkingDelayMs={0} rng={firstAvailable} />)
 
     await user.click(square(0))
     await waitFor(() => expect(square(1)).toHaveTextContent('O'))

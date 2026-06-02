@@ -29,25 +29,35 @@ export function App() {
 
 ### Props
 
-| Prop              | Type         | Default          | Description                                          |
-| ----------------- | ------------ | ---------------- | ---------------------------------------------------- |
-| `title`           | `string`     | `"Tic Tac Nora"` | Heading shown above the board.                       |
-| `className`       | `string`     | —                | Extra class on the root element.                     |
-| `thinkingDelayMs` | `number`     | `450`            | How long Nora "thinks" before moving (cosmetic).     |
-| `rng`             | `() => number` | `Math.random`  | Injectable randomness — handy for deterministic play.|
+| Prop              | Type                   | Default          | Description                                          |
+| ----------------- | ---------------------- | ---------------- | ---------------------------------------------------- |
+| `difficulty`      | `'smart' \| 'random'`  | `"smart"`        | How Nora plays — optimal minimax, or a random square.|
+| `title`           | `string`               | `"Tic Tac Nora"` | Heading shown above the board.                       |
+| `className`       | `string`               | —                | Extra class on the root element.                     |
+| `thinkingDelayMs` | `number`               | `450`            | How long Nora "thinks" before moving (cosmetic).     |
+| `rng`             | `() => number`         | `Math.random`    | Injectable randomness — handy for deterministic play.|
 
 ## How it works
 
 - **`src/game/logic.ts`** — pure, framework-free game logic: board creation,
-  win/draw detection, and Nora's random move picker. Fully unit-tested.
+  win/draw detection, and Nora's move pickers — a random one (`pickRandomMove`)
+  and an optimal **minimax** one (`pickBestMove`). Fully unit-tested.
 - **`src/game/useTicTacNora.ts`** — a React hook that owns game state. Whose turn
   it is is derived from the board (you move on even mark counts, Nora on odd), so
   state stays minimal and self-correcting.
 - **`src/components/TicTacNora.tsx`** — the presentational, accessible component
   (ARIA grid, live status region, keyboard-friendly buttons).
 
+## Nora's brain
+
+By default Nora plays **optimally** via [minimax](https://en.wikipedia.org/wiki/Minimax):
+she always takes an immediate win, always blocks yours, and never loses a game she
+could draw — so the best you can do against `difficulty="smart"` is force a draw.
+Pass `difficulty="random"` for the original beatable MVP behaviour. When several
+moves are equally optimal she breaks the tie randomly, so games still feel varied.
+
 ## Roadmap
 
-The MVP uses a random-move AI on purpose. A natural next step is to make Nora
-smarter (block the human's winning move, take a win when available, or a full
-minimax) — the move picker is isolated in `logic.ts` to make that a drop-in change.
+The move pickers are isolated in `logic.ts`, so adding a middle "medium" tier
+(e.g. mostly-optimal with the occasional random slip) would be a small, localized
+change.

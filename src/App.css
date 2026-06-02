@@ -9,6 +9,40 @@
   background: #0e0b1d;
 }
 
+.demo__controls {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.demo__level {
+  padding: 8px 18px;
+  font-family: system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #b3a8d6;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.demo__level.is-active {
+  color: #1a1530;
+  background: linear-gradient(90deg, #a96bff, #ff6b9d);
+}
+
+.demo__hint {
+  margin: -8px 0 0;
+  color: #8d82b5;
+  font-family: system-ui, sans-serif;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
 .demo__credit {
   color: #b3a8d6;
   font-family: system-ui, sans-serif;

@@ -87,3 +87,60 @@ export function pickRandomMove(board: Board, rng: () => number = Math.random): n
   const choice = Math.floor(rng() * moves.length)
   return moves[choice]
 }
+
+function opponentOf(player: Player): Player {
+  return player === 'X' ? 'O' : 'X'
+}
+
+/**
+ * Minimax score of `board` from `maximizer`'s point of view, assuming both
+ * sides play optimally. `toMove` is whose turn it is at this node. `depth`
+ * counts plies from the root so we can prefer faster wins and slower losses:
+ * a win is worth more the sooner it arrives, a loss less the later it does.
+ */
+function minimax(board: Board, maximizer: Player, toMove: Player, depth: number): number {
+  const result = evaluateBoard(board)
+  if (result.status === 'won') {
+    return result.winner === maximizer ? 10 - depth : depth - 10
+  }
+  if (result.status === 'draw') return 0
+
+  const moves = getAvailableMoves(board)
+  const isMaximizing = toMove === maximizer
+  let best = isMaximizing ? -Infinity : Infinity
+  for (const move of moves) {
+    const score = minimax(applyMove(board, move, toMove), maximizer, opponentOf(toMove), depth + 1)
+    best = isMaximizing ? Math.max(best, score) : Math.min(best, score)
+  }
+  return best
+}
+
+/**
+ * Pick the optimal move for `player` via minimax — it always takes an
+ * immediate win, always blocks the opponent's, and never loses a game it
+ * could draw. When several moves are equally optimal, `rng` breaks the tie so
+ * play still feels varied (and stays deterministic in tests). Returns null on
+ * a full board.
+ */
+export function pickBestMove(
+  board: Board,
+  player: Player,
+  rng: () => number = Math.random,
+): number | null {
+  const moves = getAvailableMoves(board)
+  if (moves.length === 0) return null
+
+  let bestScore = -Infinity
+  let bestMoves: number[] = []
+  for (const move of moves) {
+    const score = minimax(applyMove(board, move, player), player, opponentOf(player), 1)
+    if (score > bestScore) {
+      bestScore = score
+      bestMoves = [move]
+    } else if (score === bestScore) {
+      bestMoves.push(move)
+    }
+  }
+
+  return bestMoves[Math.floor(rng() * bestMoves.length)]
+}

@@ -1,8 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { applyMove, createEmptyBoard, evaluateBoard, pickRandomMove } from './logic'
+import { applyMove, createEmptyBoard, evaluateBoard, pickBestMove, pickRandomMove } from './logic'
 import { HUMAN, NORA, type Board, type GameResult, type Player } from './types'
 
+/**
+ * How Nora chooses her move:
+ *  - `smart`  — optimal minimax play: takes wins, blocks you, never loses a
+ *               game she could draw. The best you can do is force a draw.
+ *  - `random` — picks a random open square (the original MVP behaviour).
+ */
+export type Difficulty = 'smart' | 'random'
+
 export interface UseTicTacNoraOptions {
+  /** How Nora picks her move. Defaults to `smart`. */
+  difficulty?: Difficulty
   /**
    * How long Nora "thinks" before playing, in ms. Purely cosmetic — it makes
    * the computer's move feel deliberate rather than instant. Set to 0 in tests.
@@ -41,7 +51,7 @@ function turnFromBoard(board: Board): Player {
  * moves first; Nora (O) replies with a random legal move after a short delay.
  */
 export function useTicTacNora(options: UseTicTacNoraOptions = {}): TicTacNoraState {
-  const { thinkingDelayMs = 450, rng = Math.random } = options
+  const { difficulty = 'smart', thinkingDelayMs = 450, rng = Math.random } = options
 
   const [board, setBoard] = useState<Board>(createEmptyBoard)
 
@@ -75,14 +85,17 @@ export function useTicTacNora(options: UseTicTacNoraOptions = {}): TicTacNoraSta
       setBoard((current) => {
         if (evaluateBoard(current).status !== 'playing') return current
         if (turnFromBoard(current) !== NORA) return current
-        const move = pickRandomMove(current, rngRef.current)
+        const move =
+          difficulty === 'smart'
+            ? pickBestMove(current, NORA, rngRef.current)
+            : pickRandomMove(current, rngRef.current)
         if (move === null) return current
         return applyMove(current, move, NORA)
       })
     }, thinkingDelayMs)
 
     return () => clearTimeout(timer)
-  }, [turn, isOver, thinkingDelayMs])
+  }, [turn, isOver, thinkingDelayMs, difficulty])
 
   return {
     board,

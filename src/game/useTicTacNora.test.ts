@@ -24,7 +24,10 @@ describe('useTicTacNora', () => {
   })
 
   it('rejects illegal plays on a taken square', async () => {
-    const { result } = renderHook(() => useTicTacNora({ thinkingDelayMs: 0, rng: () => 0 }))
+    // Pin to the random AI so Nora's reply lands on a predictable square.
+    const { result } = renderHook(() =>
+      useTicTacNora({ difficulty: 'random', thinkingDelayMs: 0, rng: () => 0 }),
+    )
 
     act(() => {
       result.current.play(0)
@@ -44,7 +47,9 @@ describe('useTicTacNora', () => {
   })
 
   it('reset returns to a clean board', async () => {
-    const { result } = renderHook(() => useTicTacNora({ thinkingDelayMs: 0, rng: () => 0 }))
+    const { result } = renderHook(() =>
+      useTicTacNora({ difficulty: 'random', thinkingDelayMs: 0, rng: () => 0 }),
+    )
     act(() => {
       result.current.play(0)
     })
